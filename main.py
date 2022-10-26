@@ -1,8 +1,6 @@
 #hello <3
 #HI !!!
 
-from asyncio import futures
-from distutils.log import debug
 import multiprocessing
 from PIL import Image
 
