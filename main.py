@@ -2,6 +2,7 @@
 #HI !!!
 
 import multiprocessing
+from multiprocessing.pool import ThreadPool
 from PIL import Image
 
 def createImageFile(image, imgName):
@@ -33,24 +34,27 @@ def getTemplate(templateName):
 def writeTemplate(template, content):
   open('build/' + template, 'w').write(content)
 
-def getDivForPixels(img, fromH, toH, threadName):
+def getDivForPixels(pixels, fromH, toH, width, threadId):
+  print(f"Creating thread {threadId} from {fromH} to {toH}")
   str = ""
   for h in range(fromH, toH):
-    print(f"{threadName}{h}", flush=True)
-    for w in range(img.width):
+    print(f"T{threadId}: {h}", flush=True)
+    for w in range(width):
       #print(f"h: {h} | w: {w}")
-      r, g, b, a = img.getpixel((w, h))
-      if a == 0:        
+      #r, g, b, a = img.getpixel((w, h))      
+      r, g, b, a = pixels[w, h]
+      if a == 0:
+        print(f"Skipped {w, h}")  
         continue
 
       str = str + (
-        f"<div style=\"background-color: rgba({r},{g},{b},{a}); grid-column: {w+1}/{w+2}; grid-row: {h+1}/{h+2}\"></div>\n"
+        f"<div style=\"background-color:rgba({r},{g},{b},{a});grid-column:{w+1}/{w+2};grid-row:{h+1}/{h+2}\"></div>\n"
       )
   return str
 
 imgName = "magala_small.png"
 img = Image.open(imgName)  # Can be many different formats.
-pix = img.load()
+pixels = img.load()
 print(img.format, img.size, img.mode)  # Get the format, size and color mode
 
 cores = multiprocessing.cpu_count() #//2
@@ -58,15 +62,14 @@ rowsPerCore = img.height // cores
 distributed = rowsPerCore * cores
 loss = img.height - distributed
 
-pool = multiprocessing.ThreadPool(processes=cores)
+pool = ThreadPool(processes=cores)
 
 tasks = []
 for c in range(cores):
   to = (rowsPerCore * (c + 1))
   if c + 1 == cores:
     to = to + loss
-  print(f"Creating thread {c} from {rowsPerCore * c} to {to}")
-  tasks.append(pool.apply_async(getDivForPixels, (img, rowsPerCore * c, to, f"T{c}: ")))
+  tasks.append(pool.apply_async(getDivForPixels, (pixels, rowsPerCore * c, to, img.width, c)))
 
 return_val = ""
 for t in tasks:
