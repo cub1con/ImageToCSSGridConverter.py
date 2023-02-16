@@ -27,8 +27,8 @@ You need Python 3.
     - Using your own image
         - Place your image in the ImageToCSSGridConverter.py folder
         - Replace string in ``main.py`` with your file name
-            - ``imgName = "magala.png""``
+            - ``imgName = "magala.png"``
     - Using the provided image
         - Do literally nothing
-- python3 main.py
+- Run python3 main.py
 - Profit
